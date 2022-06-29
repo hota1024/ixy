@@ -3,6 +3,7 @@ import * as path from 'path'
 import * as fs from 'fs/promises'
 import { Ixy } from '../lib/Ixy/Ixy'
 import { parseIxyYaml } from '../lib/Ixy/IxyFile'
+import { IxyTaskNotFoundError } from '../lib/Ixy/errors'
 
 export default class Run extends Command {
   static description = 'run jobs ixy file'
@@ -25,8 +26,16 @@ export default class Run extends Command {
     const program = await fs.readFile(filepath, 'utf8')
     const ixyFile = parseIxyYaml(program)
 
-    const ixy = new Ixy(ixyFile)
+    try {
+      const ixy = new Ixy(ixyFile)
 
-    await ixy.run(args.task)
+      await ixy.run(args.task)
+    } catch (e) {
+      if (e instanceof IxyTaskNotFoundError) {
+        this.error(`task \`${e.taskName}\` not found`)
+      } else {
+        throw e
+      }
+    }
   }
 }

@@ -3,5 +3,7 @@ tasks:
     jobs:
       - name: remove node_modules
         run: rm -rf node_modules
+      - name: sleep
+        run: sleep 2
       - name: install packages
         run: yarn
