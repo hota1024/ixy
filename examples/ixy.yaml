@@ -1,0 +1,7 @@
+tasks:
+  install:
+    jobs:
+      - name: remove node_modules
+        run: rm -rf node_modules
+      - name: install packages
+        run: yarn
