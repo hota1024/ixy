@@ -1,4 +1,19 @@
+env:
+  - .env.ixy
+servers:
+  - name: {SERVER_NAME}
+    host: {SERVER_HOST}
+    user: {SERVER_USER}
+    private_key: {SERVER_PRIVATE_KEY}
+    passphrase: {SERVER_PASSPHRASE}
 tasks:
+  download:
+    jobs:
+      - name: download .vim
+        scp_download:
+          server: {SERVER_NAME}
+          remote: ~/.vim
+          local: .vim
   install:
     jobs:
       - name: remove node_modules

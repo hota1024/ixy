@@ -1,4 +1,5 @@
-import chalk from 'chalk'
+import * as dotenv from 'dotenv'
+import * as fs from 'fs/promises'
 import { spawn } from 'child_process'
 import Listr = require('listr')
 import parseArgsStringToArgv from 'string-argv'
@@ -12,43 +13,61 @@ export class Ixy {
   constructor(private readonly program: IxyFile) {}
 
   async run(taskName: string) {
+    const env = await this.getEnv()
     const task = this.getTaskByName(taskName)
     const listrTasks: Listr.ListrTask[] = []
+    console.log(env)
 
     for (const job of task.jobs) {
       listrTasks.push({
         title: job.name,
         async task(_, t) {
-          const [cmd, ...args] = parseArgsStringToArgv(job.run)
-          const process = spawn(cmd, args)
-          const start = Date.now()
-          let output = ''
+          if (job.run) {
+            const [cmd, ...args] = parseArgsStringToArgv(job.run)
+            const process = spawn(cmd, args)
+            const start = Date.now()
+            let output = ''
 
-          let id = setInterval(() => {
-            t.title = `${job.name} (${Date.now() - start}ms)`
-            t.output = `${output}`
-          }, 10)
+            let id = setInterval(() => {
+              t.title = `${job.name} (${Date.now() - start}ms)`
+              t.output = `${output}`
+            }, 10)
 
-          process.stdout.on('data', (data) => {
-            output = data
-          })
+            process.stdout.on('data', (data) => {
+              output = data
+            })
 
-          const promise = new Promise((resolve, reject) => {
-            process.on('exit', resolve)
-            process.on('error', reject)
-          })
+            const promise = new Promise((resolve, reject) => {
+              process.on('exit', resolve)
+              process.on('error', reject)
+            })
 
-          promise.finally(() => {
-            clearInterval(id)
-          })
+            promise.finally(() => {
+              clearInterval(id)
+            })
 
-          return promise
+            return promise
+          }
         },
       })
     }
 
     const listr = new Listr(listrTasks)
     await listr.run()
+  }
+
+  private async getEnv() {
+    const env = new Map<string, any>()
+
+    for (const envFilePath of this.program.env) {
+      dotenv.config({ path: envFilePath })
+    }
+
+    for (const key of Object.keys(process.env)) {
+      env.set(key, process.env[key])
+    }
+
+    return env
   }
 
   private getTaskByName(taskName: string) {
