@@ -28,7 +28,47 @@ export type Job = {
    * job command.
    */
   run?: string
+
+  /**
+   * SCP command.
+   */
+  scp?: SCP
 }
+
+/**
+ * SCP type.
+ */
+export type SCP = {
+  /**
+   * server name.
+   */
+  server: string
+
+  /**
+   * SCP jobs.
+   */
+  jobs: SCPJob[]
+}
+
+/**
+ * SCPJob type.
+ */
+export type SCPJob = {
+  /**
+   * job name.
+   */
+  name: string
+
+  /**
+   * operation type.
+   */
+  type: SCPJobType
+}
+
+/**
+ * SCPJobOp
+ */
+export type SCPJobType = 'download' | 'upload' | 'downloadDir' | 'uploadDir'
 
 /**
  * Scp type.

@@ -4,7 +4,7 @@ import { spawn } from 'child_process'
 import Listr = require('listr')
 import parseArgsStringToArgv from 'string-argv'
 import { IxyTaskNotFoundError } from './errors'
-import { IxyFile } from './IxyFile'
+import { IxyFile, Task } from './IxyFile'
 
 /**
  * Ixy class.
@@ -15,8 +15,39 @@ export class Ixy {
   async run(taskName: string) {
     const env = await this.getEnv()
     const task = this.getTaskByName(taskName)
+
+    const listr = new Listr([
+      ...this.generateServers(task),
+      ...this.generateJobs(task),
+    ])
+    await listr.run()
+  }
+
+  private generateServers(task: Task) {
+    const tasks: Listr.ListrTask[] = []
+    const servers = this.program.servers.filter((server) => {
+      return (
+        task.jobs.find((job) => job.scp?.server)?.scp?.server === server.name
+      )
+    })
+    console.log(servers)
+
+    for (const server of servers) {
+      console.log(server)
+      // tasks.push({
+      //   title: server.name,
+      //   task: async (ctx, task) => {
+      //     task.title = `${server.name} (${server.host}:${server.port})`
+      //     task.output = `${server.host}:${server.port}`
+      //   },
+      // })
+    }
+
+    return tasks
+  }
+
+  private generateJobs(task: Task): Listr.ListrTask[] {
     const listrTasks: Listr.ListrTask[] = []
-    console.log(env)
 
     for (const job of task.jobs) {
       listrTasks.push({
@@ -52,8 +83,7 @@ export class Ixy {
       })
     }
 
-    const listr = new Listr(listrTasks)
-    await listr.run()
+    return listrTasks
   }
 
   private async getEnv() {
